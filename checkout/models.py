@@ -32,7 +32,7 @@ class Order(models.Model):
         """
         return uuid.uuid4().hex.upper()
     
-    def update_total(self):
+    def update_total(self, save=False):
         """
         Update grand total each time a line item is added,
         accounting for delivery costs.
@@ -43,7 +43,8 @@ class Order(models.Model):
         else:
             self.delivery_cost = 0
         self.grand_total = self.order_total + self.delivery_cost
-        self.save()
+        if save:
+            super().save()
 
     def save(self, *args, **kwargs):
         """
@@ -72,7 +73,8 @@ class OrderLineItem(models.Model):
         and update the order total
         """
         self.lineitem_total = self.product.price * self.quantity
-        super().save(*args, *kwargs)
+        super().save(*args, **kwargs)
+        self.order.update_total(save=True)
 
     def __str__(self):
         return f'SKU {self.product.sku} on order {self.order.order_number}'
